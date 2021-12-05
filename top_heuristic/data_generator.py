@@ -36,7 +36,6 @@ class Grid:
     points: list[Point] = field(init=False)
     poid_min: int = 2
     poid_max: int = 10
-    #greedy: dict = {}
 
     def __post_init__(self) -> None:
         self.points = [None] * self.nbr
@@ -46,7 +45,7 @@ class Grid:
             np.random.randint(low=-floor(self.size / 2), high=floor(self.size / 2)),
         ]
         for i in range(self.nbr):
-            while [x, y] in coordinates:
+            while ([x, y] in coordinates) or ([x, y] == [0, 0]):
                 [x, y] = [
                     np.random.randint(
                         low=-floor(self.size / 2), high=floor(self.size / 2)
@@ -62,10 +61,8 @@ class Grid:
                 coordinates[i][1],
                 np.random.randint(low=self.poid_min, high=self.poid_max),
             )
-        """for point in self.points:
-            self.greedy[point] = point.poid / point.distance_origin()"""
 
-    def evaluate_origin(self, current_point = Point(0, 0, 0)) -> dict:
+    def evaluate(self, current_point = Point(0, 0, 0)) -> dict:
         greedy = {}
         if current_point == Point(0, 0, 0):
             for point in self.points:
@@ -78,8 +75,9 @@ class Grid:
     def plot(self) -> None:
         ax = plt.subplot(1, 1, 1)
         plt.grid(True)
-        plt.xlim(-floor(self.size / 2), floor(self.size / 2))
-        plt.ylim(-floor(self.size / 2), floor(self.size / 2))
+        plt.xlim(-floor(self.size / 2)-1, floor(self.size / 2)+1)
+        plt.ylim(-floor(self.size / 2)-1, floor(self.size / 2)+1)
+        ax.plot(0, 0, 'og')
         for i in self.points:
             ax.plot(i.x, i.y, 'or')
 
