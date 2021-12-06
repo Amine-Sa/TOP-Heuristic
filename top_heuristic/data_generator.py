@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 
 @dataclass
 class Point:
-    x: int
-    y: int
+    x: float
+    y: float
     poid: int
 
     def __key(self):
@@ -22,45 +22,61 @@ class Point:
             return self.__key() == other.__key()
         return NotImplemented
 
-    def distance_origin(self) -> int:
+    def distance_origin(self) -> float:
         return sqrt(self.x ** 2 + self.y ** 2)
 
-    def distance_point(self, point) -> int:
+    def distance_point(self, point) -> float:
         return sqrt((point.x - self.x) ** 2 + (point.y - self.y) ** 2)
 
 
 @dataclass
 class Grid:
-    nbr: int
-    size: int
+    path: str = False
+    size: int = 10
+    dimension: int = 10
     points: list[Point] = field(init=False)
     poid_min: int = 2
     poid_max: int = 10
 
     def __post_init__(self) -> None:
-        self.points = [None] * self.nbr
-        coordinates = [None] * self.nbr
-        [x, y] = [
-            np.random.randint(low=-floor(self.size / 2), high=floor(self.size / 2)),
-            np.random.randint(low=-floor(self.size / 2), high=floor(self.size / 2)),
-        ]
-        for i in range(self.nbr):
-            while ([x, y] in coordinates) or ([x, y] == [0, 0]):
-                [x, y] = [
-                    np.random.randint(
-                        low=-floor(self.size / 2), high=floor(self.size / 2)
-                    ),
-                    np.random.randint(
-                        low=-floor(self.size / 2), high=floor(self.size / 2)
-                    ),
-                ]
-            coordinates[i] = [x, y]
-        for i in range(self.nbr):
-            self.points[i] = Point(
-                coordinates[i][0],
-                coordinates[i][1],
-                np.random.randint(low=self.poid_min, high=self.poid_max),
-            )
+        if not(self.path) :
+            self.points = [None] * self.size
+            coordinates = [None] * self.size
+            [x, y] = [
+                np.random.randint(low=-floor(self.dimension / 2), high=floor(self.dimension / 2)),
+                np.random.randint(low=-floor(self.dimension / 2), high=floor(self.dimension / 2)),
+            ]
+            for i in range(self.size):
+                while ([x, y] in coordinates) or ([x, y] == [0, 0]):
+                    [x, y] = [
+                        np.random.randint(
+                            low=-floor(self.dimension / 2), high=floor(self.dimension / 2)
+                        ),
+                        np.random.randint(
+                            low=-floor(self.dimension / 2), high=floor(self.dimension / 2)
+                        ),
+                    ]
+                coordinates[i] = [x, y]
+            for i in range(self.size):
+                self.points[i] = Point(
+                    coordinates[i][0],
+                    coordinates[i][1],
+                    np.random.randint(low=self.poid_min, high=self.poid_max),
+                )
+        else :
+            data = open(self.path, 'r')
+            lines = data.readlines()
+            _, size = [i.strip() for i in lines[0].split(' ')]
+            self.size = int(size)
+            self.dimension = 0
+            self.points = [None] * self.size
+            for i in range(3, len(lines)-1):
+                if (self.dimension < max(abs(float(lines[i].split('\t')[0])), abs(float(lines[i].split('\t')[1])))):
+                    self.dimension = max(abs(float(lines[i].split('\t')[0])), abs(float(lines[i].split('\t')[1])))
+                self.points[i-3] = Point(float(lines[i].split('\t')[0]),
+                                       float(lines[i].split('\t')[1]), 
+                                       int(lines[i].split('\t')[2]))
+            self.dimension = ceil(self.dimension)
 
     def evaluate(self, current_point = Point(0, 0, 0)) -> dict:
         greedy = {}
@@ -75,8 +91,8 @@ class Grid:
     def plot(self) -> None:
         ax = plt.subplot(1, 1, 1)
         plt.grid(True)
-        plt.xlim(-floor(self.size / 2)-1, floor(self.size / 2)+1)
-        plt.ylim(-floor(self.size / 2)-1, floor(self.size / 2)+1)
+        plt.xlim(-floor(self.dimension / 2)-1, floor(self.dimension / 2)+1)
+        plt.ylim(-floor(self.dimension / 2)-1, floor(self.dimension / 2)+1)
         ax.plot(0, 0, 'og')
         for i in self.points:
             ax.plot(i.x, i.y, 'or')
