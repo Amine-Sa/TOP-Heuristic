@@ -39,21 +39,27 @@ class Grid:
     poid_max: int = 10
 
     def __post_init__(self) -> None:
-        if not(self.path) :
+        if not (self.path):
             self.points = [None] * self.size
             coordinates = [None] * self.size
             [x, y] = [
-                np.random.randint(low=-floor(self.dimension / 2), high=floor(self.dimension / 2)),
-                np.random.randint(low=-floor(self.dimension / 2), high=floor(self.dimension / 2)),
+                np.random.randint(
+                    low=-floor(self.dimension / 2), high=floor(self.dimension / 2)
+                ),
+                np.random.randint(
+                    low=-floor(self.dimension / 2), high=floor(self.dimension / 2)
+                ),
             ]
             for i in range(self.size):
                 while ([x, y] in coordinates) or ([x, y] == [0, 0]):
                     [x, y] = [
                         np.random.randint(
-                            low=-floor(self.dimension / 2), high=floor(self.dimension / 2)
+                            low=-floor(self.dimension / 2),
+                            high=floor(self.dimension / 2),
                         ),
                         np.random.randint(
-                            low=-floor(self.dimension / 2), high=floor(self.dimension / 2)
+                            low=-floor(self.dimension / 2),
+                            high=floor(self.dimension / 2),
                         ),
                     ]
                 coordinates[i] = [x, y]
@@ -63,22 +69,30 @@ class Grid:
                     coordinates[i][1],
                     np.random.randint(low=self.poid_min, high=self.poid_max),
                 )
-        else :
-            data = open(self.path, 'r')
+        else:
+            data = open(self.path, "r")
             lines = data.readlines()
-            _, size = [i.strip() for i in lines[0].split(' ')]
+            _, size = [i.strip() for i in lines[0].split(" ")]
             self.size = int(size)
             self.dimension = 0
             self.points = [None] * self.size
-            for i in range(3, len(lines)-1):
-                if (self.dimension < max(abs(float(lines[i].split('\t')[0])), abs(float(lines[i].split('\t')[1])))):
-                    self.dimension = max(abs(float(lines[i].split('\t')[0])), abs(float(lines[i].split('\t')[1])))
-                self.points[i-3] = Point(float(lines[i].split('\t')[0]),
-                                       float(lines[i].split('\t')[1]), 
-                                       int(lines[i].split('\t')[2]))
+            for i in range(3, len(lines)):
+                if self.dimension < max(
+                    abs(float(lines[i].split("\t")[0])),
+                    abs(float(lines[i].split("\t")[1])),
+                ):
+                    self.dimension = max(
+                        abs(float(lines[i].split("\t")[0])),
+                        abs(float(lines[i].split("\t")[1])),
+                    )
+                self.points[i - 3] = Point(
+                    float(lines[i].split("\t")[0]),
+                    float(lines[i].split("\t")[1]),
+                    int(lines[i].split("\t")[2]),
+                )
             self.dimension = ceil(self.dimension)
 
-    def evaluate(self, current_point = Point(0, 0, 0)) -> dict:
+    def evaluate(self, current_point=Point(0, 0, 0)) -> dict:
         greedy = {}
         if current_point == Point(0, 0, 0):
             for point in self.points:
@@ -89,13 +103,23 @@ class Grid:
         return greedy
 
     def plot(self) -> None:
-        ax = plt.subplot(1, 1, 1)
-        plt.grid(True)
-        plt.xlim(-floor(self.dimension / 2)-1, floor(self.dimension / 2)+1)
-        plt.ylim(-floor(self.dimension / 2)-1, floor(self.dimension / 2)+1)
-        ax.plot(0, 0, 'og')
-        for i in self.points:
-            ax.plot(i.x, i.y, 'or')
+        if not (self.path):
+            ax = plt.subplot(1, 1, 1)
+            plt.grid(True)
+            plt.xlim(-floor(self.dimension / 2) - 1, floor(self.dimension / 2) + 1)
+            plt.ylim(-floor(self.dimension / 2) - 1, floor(self.dimension / 2) + 1)
+            ax.plot(0, 0, "og")
+            for i in self.points:
+                ax.plot(i.x, i.y, "or")
+        else:
+            ax = plt.subplot(1, 1, 1)
+            plt.grid(True)
+            plt.xlim(0, ceil(self.dimension))
+            plt.ylim(0, ceil(self.dimension))
+            ax.plot(self.points[0].x, self.points[0].y, "og")
+            ax.plot(self.points[-1].x, self.points[-1].y, "og")
+            for i in self.points[1:-1]:
+                ax.plot(i.x, i.y, "or")
 
 
 @dataclass
