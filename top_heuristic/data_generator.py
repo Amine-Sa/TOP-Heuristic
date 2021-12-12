@@ -25,21 +25,62 @@ class Point:
     def distance_origin(self) -> float:
         return sqrt(self.x ** 2 + self.y ** 2)
 
-    def distance_point(self, point) -> float:
+    def distance_point(self, point: "Point") -> float:
         return sqrt((point.x - self.x) ** 2 + (point.y - self.y) ** 2)
 
 
 @dataclass
-class Grid:
+class Instance:
     path: str = False
     size: int = 10
     dimension: int = 10
     points: list[Point] = field(init=False)
+    origin: Point = Point(0, 0, 0)
+    finish: Point = Point(0, 0, 0)
+    nb_vehicules: int = 2
+    max_distance: float = 100
+    max_capacity: int = 100000
     poid_min: int = 2
     poid_max: int = 10
 
     def __post_init__(self) -> None:
-        if not (self.path):
+        if self.path:
+            data = open(self.path, "r")
+            lines = data.readlines()
+            _, size = [i.strip() for i in lines[0].split(" ")]
+            self.size = int(size) - 2
+            _, vehicules = [i.strip() for i in lines[1].split(" ")]
+            self.nb_vehicules = int(vehicules)
+            _, distance = [i.strip() for i in lines[2].split(" ")]
+            self.max_distance = float(distance)
+            self.dimension = 0
+            self.finish = Point(
+                float(lines[int(size)].split("\t")[0]),
+                float(lines[int(size)].split("\t")[1]),
+                int(lines[int(size)].split("\t")[2]),
+            )
+            self.origin = Point(
+                float(lines[3].split("\t")[0]),
+                float(lines[3].split("\t")[1]),
+                int(lines[3].split("\t")[2]),
+            )
+            self.points = [None] * self.size
+            for i in range(4, len(lines) - 1):
+                if self.dimension < max(
+                    abs(float(lines[i].split("\t")[0])),
+                    abs(float(lines[i].split("\t")[1])),
+                ):
+                    self.dimension = max(
+                        abs(float(lines[i].split("\t")[0])),
+                        abs(float(lines[i].split("\t")[1])),
+                    )
+                self.points[i - 4] = Point(
+                    float(lines[i].split("\t")[0]),
+                    float(lines[i].split("\t")[1]),
+                    int(lines[i].split("\t")[2]),
+                )
+            self.dimension = ceil(self.dimension)
+        else:
             self.points = [None] * self.size
             coordinates = [None] * self.size
             [x, y] = [
@@ -69,28 +110,6 @@ class Grid:
                     coordinates[i][1],
                     np.random.randint(low=self.poid_min, high=self.poid_max),
                 )
-        else:
-            data = open(self.path, "r")
-            lines = data.readlines()
-            _, size = [i.strip() for i in lines[0].split(" ")]
-            self.size = int(size)
-            self.dimension = 0
-            self.points = [None] * self.size
-            for i in range(3, len(lines)):
-                if self.dimension < max(
-                    abs(float(lines[i].split("\t")[0])),
-                    abs(float(lines[i].split("\t")[1])),
-                ):
-                    self.dimension = max(
-                        abs(float(lines[i].split("\t")[0])),
-                        abs(float(lines[i].split("\t")[1])),
-                    )
-                self.points[i - 3] = Point(
-                    float(lines[i].split("\t")[0]),
-                    float(lines[i].split("\t")[1]),
-                    int(lines[i].split("\t")[2]),
-                )
-            self.dimension = ceil(self.dimension)
 
     def evaluate(self, current_point=Point(0, 0, 0)) -> dict:
         greedy = {}
@@ -103,7 +122,15 @@ class Grid:
         return greedy
 
     def plot(self) -> None:
-        if not (self.path):
+        if self.path:
+            ax = plt.subplot(1, 1, 1)
+            plt.grid(True)
+            plt.xlim(0, ceil(self.dimension))
+            plt.ylim(0, ceil(self.dimension))
+            ax.plot(self.origin.x, self.origin.y, "og")
+            for i in self.points:
+                ax.plot(i.x, i.y, "or")
+        else:
             ax = plt.subplot(1, 1, 1)
             plt.grid(True)
             plt.xlim(-floor(self.dimension / 2) - 1, floor(self.dimension / 2) + 1)
@@ -111,22 +138,6 @@ class Grid:
             ax.plot(0, 0, "og")
             for i in self.points:
                 ax.plot(i.x, i.y, "or")
-        else:
-            ax = plt.subplot(1, 1, 1)
-            plt.grid(True)
-            plt.xlim(0, ceil(self.dimension))
-            plt.ylim(0, ceil(self.dimension))
-            ax.plot(self.points[0].x, self.points[0].y, "og")
-            ax.plot(self.points[-1].x, self.points[-1].y, "og")
-            for i in self.points[1:-1]:
-                ax.plot(i.x, i.y, "or")
-
-
-@dataclass
-class Solution:
-    nb_vehicules: int
-    max_distance: int
-    max_capacity: int
 
     def CouldReturn(
         self, current_point, target_point, current_distance, current_capacity
@@ -134,7 +145,7 @@ class Solution:
         if (
             current_distance
             + current_point.distance_point(target_point)
-            + target_point.distance_origin()
+            + target_point.distance_point(self.finish)
             > self.max_distance
         ):
             return False
